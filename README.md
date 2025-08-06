@@ -122,26 +122,6 @@ bettracker/
 - **Backup**: Controle total dos seus dados
 - **Privacidade**: Nenhum dado enviado para servidores externos
 
-## 🚀 Deploy
-
-Para fazer deploy com banco compartilhado:
-
-1. Configure variáveis de ambiente no Vercel/Netlify
-2. Use suas credenciais do Supabase
-3. Deploy automático do GitHub
-
-## 🤝 Contribuição
-
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT.
-
 ## 🆘 Suporte
 
 Se encontrar algum problema:
