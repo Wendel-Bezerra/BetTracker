@@ -5,13 +5,19 @@ export async function POST(request: NextRequest) {
   try {
     const bet = await request.json()
     
-    if (!bet.user_id || !bet.date || !bet.sport || !bet.match_name || !bet.bet_type || !bet.odds || !bet.stake) {
+    if (!bet.user_id || !bet.date || !bet.sport || !bet.match_name || !bet.bet_type || !bet.bookmaker || !bet.odds || !bet.stake) {
       return NextResponse.json({ error: 'Todos os campos são obrigatórios' }, { status: 400 })
+    }
+
+    // Validação adicional para bookmaker
+    if (!bet.bookmaker.trim()) {
+      return NextResponse.json({ error: 'Casa de apostas é obrigatória' }, { status: 400 })
     }
 
     bet.id = crypto.randomUUID()
     bet.result = bet.result || 'pending'
     bet.profit = bet.profit || 0
+    bet.bookmaker = bet.bookmaker.trim() // Garantir que não há espaços extras
     
     const result = localDb.createBet(bet)
     
@@ -46,18 +52,30 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const bet = await request.json()
+    console.log('📝 Dados recebidos para atualização:', bet)
     
     if (!bet.id || !bet.user_id) {
+      console.log('❌ Validação falhou: ID ou user_id ausente')
       return NextResponse.json({ error: 'ID e user_id são obrigatórios' }, { status: 400 })
     }
 
+    // Validação adicional para bookmaker
+    if (!bet.bookmaker || !bet.bookmaker.trim()) {
+      console.log('❌ Validação falhou: bookmaker ausente ou vazio')
+      return NextResponse.json({ error: 'Casa de apostas é obrigatória' }, { status: 400 })
+    }
+
+    bet.bookmaker = bet.bookmaker.trim() // Garantir que não há espaços extras
+    console.log('✅ Dados validados, chamando updateBet...')
+
     const result = localDb.updateBet(bet)
+    console.log('✅ Resultado da atualização:', result)
     
     return NextResponse.json({ 
       message: 'Aposta atualizada com sucesso' 
     })
   } catch (error) {
-    console.error('Erro ao atualizar aposta:', error)
+    console.error('❌ Erro detalhado ao atualizar aposta:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }

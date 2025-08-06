@@ -15,12 +15,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { BOOKMAKERS } from "@/types/betting"
 
 interface Bet {
   date: string
   sport: string
   match_name: string
   bet_type: string
+  bookmaker: string
   odds: number
   stake: number
   result: "pending" | "won" | "lost"
@@ -39,6 +41,7 @@ export function AddBetDialog({ children, onAddBet }: AddBetDialogProps) {
     sport: "",
     match_name: "",
     bet_type: "",
+    bookmaker: "Outras", // Valor padrão
     odds: "",
     stake: "",
     result: "pending" as const,
@@ -47,11 +50,18 @@ export function AddBetDialog({ children, onAddBet }: AddBetDialogProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Validação adicional para garantir que bookmaker seja preenchido
+    if (!formData.bookmaker || formData.bookmaker.trim() === "") {
+      alert("Por favor, selecione uma casa de apostas")
+      return
+    }
+
     const bet: Omit<Bet, "id"> = {
       date: formData.date,
       sport: formData.sport,
       match_name: formData.match_name,
       bet_type: formData.bet_type,
+      bookmaker: formData.bookmaker.trim(),
       odds: Number.parseFloat(formData.odds),
       stake: Number.parseFloat(formData.stake),
       result: formData.result,
@@ -70,6 +80,7 @@ export function AddBetDialog({ children, onAddBet }: AddBetDialogProps) {
       sport: "",
       match_name: "",
       bet_type: "",
+      bookmaker: "Outras", // Valor padrão
       odds: "",
       stake: "",
       result: "pending",
@@ -134,6 +145,25 @@ export function AddBetDialog({ children, onAddBet }: AddBetDialogProps) {
               onChange={(e) => setFormData({ ...formData, bet_type: e.target.value })}
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bookmaker">Casa de Apostas *</Label>
+            <Select value={formData.bookmaker} onValueChange={(value) => setFormData({ ...formData, bookmaker: value })} required>
+              <SelectTrigger className={!formData.bookmaker ? "border-red-500" : ""}>
+                <SelectValue placeholder="Selecione a casa de apostas" />
+              </SelectTrigger>
+              <SelectContent>
+                {BOOKMAKERS.map((bookmaker) => (
+                  <SelectItem key={bookmaker} value={bookmaker}>
+                    {bookmaker}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!formData.bookmaker && (
+              <p className="text-sm text-red-600">Casa de apostas é obrigatória</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

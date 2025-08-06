@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS bets (
   sport VARCHAR(100) NOT NULL,
   match_name VARCHAR(255) NOT NULL,
   bet_type VARCHAR(255) NOT NULL,
+  bookmaker VARCHAR(100) NOT NULL,
   odds DECIMAL(5,2) NOT NULL CHECK (odds > 0),
   stake DECIMAL(10,2) NOT NULL CHECK (stake > 0),
   result VARCHAR(20) CHECK (result IN ('pending', 'won', 'lost')) DEFAULT 'pending',

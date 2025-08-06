@@ -10,8 +10,10 @@ import { AddBetDialog } from "@/components/add-bet-dialog"
 import { EditBetDialog } from "@/components/edit-bet-dialog"
 import { BankrollDialog } from "@/components/bankroll-dialog"
 import { DeleteBetDialog } from "@/components/delete-bet-dialog"
+import { PremiumModal } from "@/components/premium-modal"
 import { useBettingLocal } from "@/hooks/use-betting-local"
 import type { Bet, BetInsert } from "@/types/betting"
+import { BOOKMAKERS } from "@/types/betting"
 import {
   TrendingUp,
   TrendingDown,
@@ -28,6 +30,7 @@ import {
   User,
   Download,
   Upload,
+  Crown,
 } from "lucide-react"
 
 interface BettingDashboardProps {
@@ -38,6 +41,7 @@ interface BettingDashboardProps {
 export function BettingDashboard({ user, onLogout }: BettingDashboardProps) {
   const [filterSport, setFilterSport] = useState<string>("all")
   const [filterResult, setFilterResult] = useState<string>("all")
+  const [filterBookmaker, setFilterBookmaker] = useState<string>("all")
 
   const { bets, initialBankroll, loading, isConnected, userId, isMounted, addBet, updateBet, deleteBet, updateBankroll, exportData, importData } =
     useBettingLocal(user?.email || "")
@@ -45,7 +49,8 @@ export function BettingDashboard({ user, onLogout }: BettingDashboardProps) {
   const filteredBets = bets.filter((bet) => {
     const sportMatch = filterSport === "all" || bet.sport === filterSport
     const resultMatch = filterResult === "all" || bet.result === filterResult
-    return sportMatch && resultMatch
+    const bookmakerMatch = filterBookmaker === "all" || bet.bookmaker === filterBookmaker
+    return sportMatch && resultMatch && bookmakerMatch
   })
 
   const totalProfit = bets.reduce((sum, bet) => sum + bet.profit, 0)
@@ -66,6 +71,7 @@ export function BettingDashboard({ user, onLogout }: BettingDashboardProps) {
       sport: newBet.sport,
       match_name: newBet.match_name,
       bet_type: newBet.bet_type,
+      bookmaker: newBet.bookmaker,
       odds: newBet.odds,
       stake: newBet.stake,
       result: newBet.result,
@@ -334,14 +340,37 @@ export function BettingDashboard({ user, onLogout }: BettingDashboardProps) {
               <SelectItem value="pending">Pendente</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select value={filterBookmaker} onValueChange={setFilterBookmaker}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Casa de Apostas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as casas</SelectItem>
+              {BOOKMAKERS.map((bookmaker) => (
+                <SelectItem key={bookmaker} value={bookmaker}>
+                  {bookmaker}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <AddBetDialog onAddBet={handleAddBet}>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Aposta
-          </Button>
-        </AddBetDialog>
+        <div className="flex gap-2">
+          <AddBetDialog onAddBet={handleAddBet}>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Aposta
+            </Button>
+          </AddBetDialog>
+          
+          <PremiumModal>
+            <Button variant="outline" className="border-yellow-400 text-yellow-600 hover:bg-yellow-50">
+              <Crown className="h-4 w-4 mr-2" />
+              Nova Bankroll
+            </Button>
+          </PremiumModal>
+        </div>
       </div>
 
       {/* Bets Table */}
@@ -387,6 +416,7 @@ export function BettingDashboard({ user, onLogout }: BettingDashboardProps) {
                   <TableHead>Esporte</TableHead>
                   <TableHead>Jogo</TableHead>
                   <TableHead>Tipo de Aposta</TableHead>
+                  <TableHead>Casa de Apostas</TableHead>
                   <TableHead>Odd</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Resultado</TableHead>
@@ -401,6 +431,7 @@ export function BettingDashboard({ user, onLogout }: BettingDashboardProps) {
                     <TableCell>{bet.sport}</TableCell>
                     <TableCell className="font-medium">{bet.match_name}</TableCell>
                     <TableCell>{bet.bet_type}</TableCell>
+                    <TableCell>{bet.bookmaker}</TableCell>
                     <TableCell>{bet.odds.toFixed(2)}</TableCell>
                     <TableCell>R$ {bet.stake.toFixed(2)}</TableCell>
                     <TableCell>{getResultBadge(bet.result)}</TableCell>

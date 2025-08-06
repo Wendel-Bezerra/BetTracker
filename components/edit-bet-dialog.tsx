@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { BOOKMAKERS } from "@/types/betting"
 
 interface Bet {
   id: string
@@ -22,6 +23,7 @@ interface Bet {
   sport: string
   match_name: string // Alterar de match para match_name
   bet_type: string
+  bookmaker: string
   odds: number
   stake: number
   result: "pending" | "won" | "lost"
@@ -41,6 +43,7 @@ export function EditBetDialog({ children, bet, onUpdateBet }: EditBetDialogProps
     sport: bet.sport,
     match_name: bet.match_name, // Alterado de match para match_name
     bet_type: bet.bet_type, // Alterado de betType para bet_type
+    bookmaker: bet.bookmaker,
     odds: bet.odds.toString(),
     stake: bet.stake.toString(),
     result: bet.result,
@@ -49,12 +52,19 @@ export function EditBetDialog({ children, bet, onUpdateBet }: EditBetDialogProps
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Validação adicional para garantir que bookmaker seja preenchido
+    if (!formData.bookmaker || formData.bookmaker.trim() === "") {
+      alert("Por favor, selecione uma casa de apostas")
+      return
+    }
+
     const updatedBet: Bet = {
       ...bet,
       date: formData.date,
       sport: formData.sport,
       match_name: formData.match_name, // Alterado de formData.match para formData.match_name
       bet_type: formData.bet_type, // Alterado de formData.betType para formData.bet_type
+      bookmaker: formData.bookmaker.trim(),
       odds: Number.parseFloat(formData.odds),
       stake: Number.parseFloat(formData.stake),
       result: formData.result,
@@ -79,6 +89,7 @@ export function EditBetDialog({ children, bet, onUpdateBet }: EditBetDialogProps
         sport: bet.sport,
         match_name: bet.match_name, // Alterado para bet.match_name
         bet_type: bet.bet_type, // Alterado para bet.bet_type
+        bookmaker: bet.bookmaker,
         odds: bet.odds.toString(),
         stake: bet.stake.toString(),
         result: bet.result,
@@ -144,6 +155,25 @@ export function EditBetDialog({ children, bet, onUpdateBet }: EditBetDialogProps
               onChange={(e) => setFormData({ ...formData, bet_type: e.target.value })}
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-bookmaker">Casa de Apostas *</Label>
+            <Select value={formData.bookmaker} onValueChange={(value) => setFormData({ ...formData, bookmaker: value })} required>
+              <SelectTrigger className={!formData.bookmaker ? "border-red-500" : ""}>
+                <SelectValue placeholder="Selecione a casa de apostas" />
+              </SelectTrigger>
+              <SelectContent>
+                {BOOKMAKERS.map((bookmaker) => (
+                  <SelectItem key={bookmaker} value={bookmaker}>
+                    {bookmaker}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!formData.bookmaker && (
+              <p className="text-sm text-red-600">Casa de apostas é obrigatória</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

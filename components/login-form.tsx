@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { TrendingUp, AlertCircle, Loader2 } from "lucide-react"
-import { supabase } from "@/lib/supabase"
 
 interface LoginFormProps {
   onLogin: (userData: { name: string; email: string }) => void
@@ -25,29 +24,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
-  }
-
-  const checkEmailExists = async (email: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.from("users").select("id").eq("email", email.toLowerCase().trim()).single()
-
-      if (error && error.code === "PGRST116") {
-        // Email não existe
-        return false
-      }
-
-      if (error) {
-        console.error("Erro ao verificar email:", error)
-        throw error
-      }
-
-      // Email já existe
-      return true
-    } catch (error) {
-      console.error("Erro na verificação de email:", error)
-      // Em caso de erro de conexão, assumir que email não existe para permitir modo offline
-      return false
-    }
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -68,33 +44,17 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         return
       }
 
-      // Verificar se o usuário existe
-      const emailExists = await checkEmailExists(email)
-
-      if (!emailExists) {
-        setError("Email não encontrado. Verifique o email ou crie uma nova conta.")
-        return
-      }
-
-      // Buscar dados do usuário
-      const { data: userData, error: userError } = await supabase.from("users").select("*").eq("email", email).single()
-
-      if (userError) {
-        console.error("Erro ao buscar usuário:", userError)
-        setError("Erro ao fazer login. Tente novamente.")
-        return
-      }
-
-      // Simulação de verificação de senha (em produção, use autenticação real)
       if (loginData.password.length < 6) {
         setError("Senha deve ter pelo menos 6 caracteres.")
         return
       }
 
-      onLogin({ name: userData.name, email: userData.email })
+      // Simulação de login - em modo local, aceitamos qualquer email válido
+      // Em produção, você implementaria autenticação real
+      onLogin({ name: email.split('@')[0], email: email })
     } catch (error) {
       console.error("Erro no login:", error)
-      setError("Erro de conexão. Tente novamente.")
+      setError("Erro ao fazer login. Tente novamente.")
     } finally {
       setLoading(false)
     }
@@ -135,51 +95,12 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         return
       }
 
-      // Verificar se o email já está em uso
-      const emailExists = await checkEmailExists(email)
-
-      if (emailExists) {
-        setError("Este email já está sendo usado por outro usuário. Tente fazer login ou use outro email.")
-        return
-      }
-
-      // Tentar criar o usuário no banco
-      try {
-        const { data: newUser, error: createError } = await supabase
-          .from("users")
-          .insert([
-            {
-              email: email,
-              name: name,
-            },
-          ])
-          .select()
-          .single()
-
-        if (createError) {
-          console.error("Erro ao criar usuário:", createError)
-
-          // Verificar se é erro de email duplicado
-          if (createError.code === "23505" && createError.message.includes("email")) {
-            setError("Este email já está sendo usado. Tente fazer login ou use outro email.")
-            return
-          }
-
-          setError("Erro ao criar conta. Tente novamente.")
-          return
-        }
-
-        console.log("✅ Usuário criado com sucesso:", newUser.id)
-        onLogin({ name: newUser.name, email: newUser.email })
-      } catch (dbError) {
-        console.error("Erro de banco de dados:", dbError)
-        // Se não conseguir criar no banco, permitir modo offline
-        console.log("⚠️ Criando usuário em modo offline")
-        onLogin({ name: name, email: email })
-      }
+      // Em modo local, criar usuário diretamente
+      console.log("✅ Usuário criado em modo local:", email)
+      onLogin({ name: name, email: email })
     } catch (error) {
       console.error("Erro no registro:", error)
-      setError("Erro de conexão. Tente novamente.")
+      setError("Erro ao criar conta. Tente novamente.")
     } finally {
       setLoading(false)
     }
@@ -277,7 +198,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                   required
                 />
                 <p className="text-xs text-gray-600">
-                  ⚠️ Use um email único. Não é possível usar o mesmo email de outro usuário.
+                  📧 Use um email único para identificar sua conta.
                 </p>
               </div>
               <div className="space-y-2">
@@ -308,7 +229,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         </Tabs>
 
         <div className="mt-4 text-center">
-          <p className="text-xs text-gray-600">🔒 Seus dados são protegidos e cada email pode ter apenas uma conta.</p>
+          <p className="text-xs text-gray-600">💾 Seus dados são salvos localmente no seu dispositivo.</p>
         </div>
       </CardContent>
     </Card>
